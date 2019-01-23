@@ -9,7 +9,25 @@ var apiRoutes         = require('./routes/api.js');
 var fccTestingRoutes  = require('./routes/fcctesting.js');
 var runner            = require('./test-runner');
 
+const mongoose = require('mongoose');
+const helmet = require('helmet');
+
+const url = process.env.DB;
+const connect = mongoose.connect(url);
+connect.then((db) => {
+  console.log("Congratulations, database is connected and is listening to us");
+}, (err) => { console.log(err); });
+
 var app = express();
+
+
+//Only allow your site to be loading in an iFrame on your own pages.
+app.use(helmet.frameguard({ action: 'sameorigin' }));
+//Do not allow DNS prefetching.
+app.use(helmet.dnsPrefetchControl());
+//Only allow your site to send the referrer for your own pages.
+app.use(helmet.referrerPolicy({ policy: 'same-origin' }));
+
 
 app.use('/public', express.static(process.cwd() + '/public'));
 
