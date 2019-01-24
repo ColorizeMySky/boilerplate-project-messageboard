@@ -31,9 +31,19 @@ module.exports = function (app) {
             let result = board[0].threads;
             result.length = 10;
             for (let item of result) {
-              if(item.replies.length > 3) item.replies.length = 3;
-            }            
+              item.delete_password = undefined;
+              item.reported = undefined;
+              
+              if(item.replies.length > 3) item.replies.length = 3; 
+              for (let reply of item.replies) {
+                reply.delete_password = undefined;
+                reply.reported = undefined;
+              }
+            }
             
+            /*result.map( (item) => {
+              delete item.delete_password
+            })*/            
             res.statusCode = 200;
             res.json(result);          
           }
@@ -64,8 +74,8 @@ module.exports = function (app) {
           board[0].save()
           .then( (board) => {
             res.statusCode = 201;
-          })
-          res.end(`New thread with ID ${board[0].threads[0]._id} for board "${board[0].name}" is created successfully. Waiting for some more.`);
+            res.end(`New thread with ID ${board.threads[0]._id} for board "${board.name}" is created successfully. Waiting for some more.`);
+          })          
         }
       })
       .catch((err) => next(err));       
@@ -110,7 +120,7 @@ module.exports = function (app) {
     .delete(function(req, res, next) {  
       Boards.find({"name": req.params.board})
       .then((board) => {
-        if(board == null) {
+        if(board.length == 0) {
           res.statusCode = 404;
           res.end("Board not found")
         }
@@ -144,7 +154,6 @@ module.exports = function (app) {
   
   app.route('/api/replies/:board')
     //I can GET an entire thread with all it's replies from /api/replies/{board}?thread_id={thread_id}. Also hiding the same fields.
-    // "Also hiding the same fields." What? What are you talking about? Why would not do univocal tasks?
     .get(function(req, res, next) {
       Boards.find({"name": req.params.board})
         .then( (board) => {
@@ -162,8 +171,17 @@ module.exports = function (app) {
               res.end("Thread don't found");
             }
             else {
+              let result = thread[0];              
+              result.delete_password = undefined;
+              result.reported = undefined;
+
+              for (let reply of result.replies) {
+                reply.delete_password = undefined;
+                reply.reported = undefined;
+              }
+              
               res.statusCode = 200;
-              res.json(thread);
+              res.json(thread[0]);
             }          
           }          
         })
@@ -198,7 +216,7 @@ module.exports = function (app) {
               thread[0].replies.push(newReply);
               board[0].save()
               .then( (board) => {
-                res.statusCode = 200;
+                res.statusCode = 201;
                 res.json(board);
               })
             }                            
